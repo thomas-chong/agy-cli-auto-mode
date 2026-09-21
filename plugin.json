@@ -1,0 +1,5 @@
+{
+  "$schema": "https://antigravity.google/schemas/v1/plugin.json",
+  "name": "jev-auto-mode",
+  "description": "Classifies Antigravity tool calls with Jev and asks the user when a call is risky or uncertain."
+}

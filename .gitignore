@@ -1,0 +1,12 @@
+node_modules/
+.pi/
+*.log
+*.tmp
+.env
+.env.*
+!.env.example
+coverage/
+benchmark-report*.json
+docs/demo/renders/
+docs/demo/snapshots/
+.DS_Store

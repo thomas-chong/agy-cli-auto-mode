@@ -1,0 +1,19 @@
+{
+  "jev-auto-mode": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "sequential": true,
+        "hooks": [
+          {
+            "type": "command",
+            "name": "Jev tool safety classifier",
+            "command": "node ./src/hook.mjs",
+            "timeout": 10,
+            "description": "Automatically permits confident safe calls and asks the user about risky or uncertain calls."
+          }
+        ]
+      }
+    ]
+  }
+}

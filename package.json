@@ -1,0 +1,35 @@
+{
+  "name": "agy-jev-auto-mode",
+  "version": "0.1.0",
+  "description": "A conservative Jev-backed auto-mode safety gate for Antigravity CLI tool calls",
+  "type": "module",
+  "private": true,
+  "author": "Thomas Chong",
+  "homepage": "https://github.com/thomas-chong/agy-cli-auto-mode#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thomas-chong/agy-cli-auto-mode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thomas-chong/agy-cli-auto-mode/issues"
+  },
+  "keywords": [
+    "antigravity",
+    "agy",
+    "jev",
+    "ai-safety",
+    "coding-agent",
+    "tool-permissions"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "benchmark": "node benchmark/run.mjs --policy-only",
+    "benchmark:live": "node benchmark/run.mjs --live",
+    "trace:live": "node scripts/capture-live-trace.mjs docs/demo/trace.json",
+    "validate:plugin": "agy plugin validate ."
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

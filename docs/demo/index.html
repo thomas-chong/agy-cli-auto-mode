@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=960, height=540" />
+  <title>Antigravity Jev Auto Mode — live trace</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    :root {
+      --bg: #06101f;
+      --panel: rgba(12, 27, 49, 0.92);
+      --line: #24415f;
+      --text: #eef7ff;
+      --muted: #8fa9c2;
+      --cyan: #54d8ff;
+      --violet: #9b87ff;
+      --green: #48e3a2;
+      --amber: #ffbf69;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 960px; height: 540px; overflow: hidden; background: var(--bg); }
+    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--text); }
+    #root {
+      position: relative;
+      width: 960px;
+      height: 540px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 52% 48%, rgba(78, 112, 255, 0.16), transparent 34%),
+        linear-gradient(135deg, #050b16 0%, #08172a 62%, #07111e 100%);
+    }
+    #root::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .18;
+      background-image: linear-gradient(rgba(93, 151, 199, .18) 1px, transparent 1px), linear-gradient(90deg, rgba(93, 151, 199, .18) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .header { position: absolute; top: 30px; left: 42px; right: 42px; display: flex; align-items: center; justify-content: space-between; z-index: 3; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 750; font-size: 21px; letter-spacing: -.02em; }
+    .brand-mark { width: 30px; height: 30px; transform: rotate(45deg); border: 2px solid var(--cyan); border-radius: 7px; box-shadow: 0 0 22px rgba(84,216,255,.45); }
+    .live { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 14px var(--green); }
+    .subtitle { position: absolute; top: 76px; left: 44px; color: var(--muted); font-size: 14px; z-index: 3; }
+    .scene { position: absolute; inset: 112px 42px 40px; opacity: 0; }
+    .trace-meta { display: flex; justify-content: space-between; align-items: end; margin-bottom: 15px; }
+    .eyebrow { color: var(--cyan); font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 5px; }
+    .scene h2 { margin: 0; font-size: 27px; letter-spacing: -.035em; }
+    .capture { color: var(--muted); font: 12px/1.35 ui-monospace, SFMono-Regular, Menlo, monospace; text-align: right; }
+    .pipeline { position: relative; display: grid; grid-template-columns: 1.2fr .82fr 1fr .9fr; gap: 14px; align-items: stretch; }
+    .pipeline::before { content: ""; position: absolute; left: 11%; right: 11%; top: 92px; height: 2px; background: var(--line); z-index: 0; }
+    .node { position: relative; z-index: 1; min-height: 185px; padding: 17px; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); box-shadow: 0 16px 42px rgba(0,0,0,.24); }
+    .node-label { margin-bottom: 12px; color: var(--muted); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .command { padding: 12px; border-radius: 9px; background: #030914; color: #dff8ff; font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; border: 1px solid #1b3853; white-space: nowrap; }
+    .request { margin-top: 11px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .check { display: flex; height: 112px; align-items: center; justify-content: center; text-align: center; color: var(--green); font-size: 13px; font-weight: 750; }
+    .check-ring { width: 66px; height: 66px; display: grid; place-items: center; margin: 0 auto 10px; border: 2px solid currentColor; border-radius: 50%; font-size: 25px; box-shadow: 0 0 24px rgba(72,227,162,.16); }
+    .model { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .model strong { color: var(--violet); }
+    .bar { position: relative; height: 13px; margin: 17px 0 8px; overflow: hidden; border-radius: 999px; background: #13243a; }
+    .bar-fill { width: 0%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--violet), var(--green)); box-shadow: 0 0 16px rgba(72,227,162,.42); }
+    .prob { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; }
+    .prob-value { color: var(--text); font-weight: 800; }
+    .decision-node { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+    .decision-icon { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 20px; font-size: 27px; font-weight: 900; }
+    .decision-title { margin-top: 13px; font-size: 20px; font-weight: 850; letter-spacing: -.02em; }
+    .decision-note { margin-top: 6px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .safe .decision-icon { color: #042116; background: var(--green); box-shadow: 0 0 28px rgba(72,227,162,.34); }
+    .safe .decision-title { color: var(--green); }
+    .risky .decision-icon { color: #301804; background: var(--amber); box-shadow: 0 0 28px rgba(255,191,105,.3); }
+    .risky .decision-title { color: var(--amber); }
+    .risky .check { color: var(--cyan); }
+    .risky .bar-fill { background: linear-gradient(90deg, #ff7f75, var(--amber)); }
+    .packet { position: absolute; z-index: 5; top: 84px; left: 9%; width: 13px; height: 13px; border-radius: 4px; background: var(--cyan); box-shadow: 0 0 16px var(--cyan); opacity: 0; }
+    .trace-footer { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; color: var(--muted); font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .trace-footer strong { color: var(--text); }
+    .progress { position: absolute; left: 42px; right: 42px; bottom: 20px; height: 2px; background: #18304a; overflow: hidden; }
+    .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--violet), var(--green)); }
+    .source-note { position: absolute; right: 42px; bottom: 27px; color: #65819b; font-size: 9px; }
+  </style>
+</head>
+<body>
+  <!-- Generated from docs/demo/trace.json. No credentials or raw transcripts are embedded. -->
+  <div id="root" data-composition-id="jev-trace" data-start="0" data-duration="8" data-width="960" data-height="540" data-fps="15">
+    <header id="demo-header" class="header">
+      <div class="brand"><span class="brand-mark"></span>Antigravity Jev Auto Mode</div>
+      <div class="live"><span class="live-dot"></span>sanitized live trace</div>
+    </header>
+    <div id="demo-subtitle" class="subtitle">One tool call. Deterministic policy first. Jev only when context matters.</div>
+
+    <section id="safe-scene" class="scene safe">
+      <div class="trace-meta">
+        <div><div class="eyebrow">Trace 01 · Routine local inspection</div><h2>Confidently safe → continue automatically</h2></div>
+        <div class="capture">jev-1.13.0<br/>438.5 ms · 661 input tokens</div>
+      </div>
+      <div class="pipeline">
+        <article class="node"><div class="node-label">Proposed tool call</div><div class="command">$ pwd</div><div class="request">User: “Show me the current working directory.”</div></article>
+        <article class="node"><div class="node-label">Deterministic policy</div><div class="check"><div><div class="check-ring">✓</div>No hard rule matched</div></div></article>
+        <article class="node"><div class="node-label">Jev decision</div><div class="model"><strong>SAFE</strong><span>confidence 1.00</span></div><div class="bar"><div class="bar-fill" data-target="100"></div></div><div class="prob"><span>safe probability</span><span class="prob-value">100%</span></div></article>
+        <article class="node decision-node"><div class="node-label">Gate output</div><div class="decision-icon">✓</div><div class="decision-title">ALLOW</div><div class="decision-note">Antigravity executes through the scoped command grant.</div></article>
+        <div class="packet"></div>
+      </div>
+      <div class="trace-footer"><span>POST /v1/systemone</span><span><strong>Result:</strong> tool proceeds</span></div>
+    </section>
+
+    <section id="risky-scene" class="scene risky">
+      <div class="trace-meta">
+        <div><div class="eyebrow">Trace 02 · Remote side effect</div><h2>Not authorized → return control to the user</h2></div>
+        <div class="capture">jev-1.13.0<br/>312.0 ms · 663 input tokens</div>
+      </div>
+      <div class="pipeline">
+        <article class="node"><div class="node-label">Proposed tool call</div><div class="command">$ git push origin main</div><div class="request">User only asked to finish changes locally.</div></article>
+        <article class="node"><div class="node-label">Deterministic policy</div><div class="check"><div><div class="check-ring">→</div>Semantic review needed</div></div></article>
+        <article class="node"><div class="node-label">Jev decision</div><div class="model"><strong>ASK</strong><span>confidence 1.00</span></div><div class="bar"><div class="bar-fill" data-target="0"></div></div><div class="prob"><span>safe probability</span><span class="prob-value">0%</span></div></article>
+        <article class="node decision-node"><div class="node-label">Gate output</div><div class="decision-icon">!</div><div class="decision-title">FORCE ASK</div><div class="decision-note">Interactive approval card; headless runs soft-deny.</div></article>
+        <div class="packet"></div>
+      </div>
+      <div class="trace-footer"><span>POST /v1/systemone</span><span><strong>Result:</strong> human approval required</span></div>
+    </section>
+
+    <div id="demo-progress" class="progress"><div class="progress-fill"></div></div>
+    <div id="demo-source" class="source-note">Captured 2026-09-20 · values rounded for display</div>
+  </div>
+
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    tl.set(["#safe-scene", "#risky-scene"], { opacity: 0 });
+    tl.set(".progress-fill", { width: "0%" });
+
+    tl.to("#safe-scene", { opacity: 1, duration: 0.35, ease: "power2.out" }, 0.1)
+      .from("#safe-scene .node", { y: 18, opacity: 0, stagger: 0.11, duration: 0.38, ease: "power2.out" }, 0.2)
+      .set("#safe-scene .packet", { opacity: 1, x: 0 }, 0.7)
+      .to("#safe-scene .packet", { x: 650, duration: 1.55, ease: "power1.inOut" }, 0.7)
+      .to("#safe-scene .bar-fill", { width: "100%", duration: 0.7, ease: "power2.out" }, 1.35)
+      .from("#safe-scene .decision-icon", { scale: 0.5, opacity: 0, duration: 0.38, ease: "back.out(1.8)" }, 2.2)
+      .to("#safe-scene", { opacity: 0, y: -10, duration: 0.35, ease: "power2.in" }, 3.55);
+
+    tl.to("#risky-scene", { opacity: 1, duration: 0.35, ease: "power2.out" }, 3.9)
+      .from("#risky-scene .node", { y: 18, opacity: 0, stagger: 0.11, duration: 0.38, ease: "power2.out" }, 4.0)
+      .set("#risky-scene .packet", { opacity: 1, x: 0 }, 4.45)
+      .to("#risky-scene .packet", { x: 650, duration: 1.55, ease: "power1.inOut" }, 4.45)
+      .to("#risky-scene .bar-fill", { width: "2%", duration: 0.45, ease: "power2.out" }, 5.15)
+      .from("#risky-scene .decision-icon", { scale: 0.5, opacity: 0, duration: 0.38, ease: "back.out(1.8)" }, 5.95)
+      .to("#risky-scene .decision-icon", { scale: 1.08, repeat: 1, yoyo: true, duration: 0.28 }, 6.45);
+
+    tl.to(".progress-fill", { width: "100%", duration: 8, ease: "none" }, 0);
+    window.__timelines["jev-trace"] = tl;
+    tl.seek(0);
+  </script>
+</body>
+</html>
