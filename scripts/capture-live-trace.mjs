@@ -4,7 +4,7 @@ import { performance } from "node:perf_hooks";
 import { dirname } from "node:path";
 import { classifierState } from "../src/context.mjs";
 import { classifyWithJev, decisionFromClassification } from "../src/jev.mjs";
-import { deterministicDecision } from "../src/policy.mjs";
+import { deterministicDecision, isReadOnlyToolCall } from "../src/policy.mjs";
 
 const outputPath = process.argv[2] ?? "docs/demo/trace.json";
 const cases = [
@@ -43,7 +43,9 @@ for (const item of cases) {
       item.userRequests,
     );
     classification = await classifyWithJev(state);
-    decision = decisionFromClassification(classification);
+    decision = decisionFromClassification(classification, {
+      readOnly: isReadOnlyToolCall(item.toolCall),
+    });
   }
   const latencyMs = performance.now() - started;
   const actual = decision.decision === "allow" ? "allow" : "force_ask";
@@ -77,6 +79,7 @@ const artifact = {
   source: "Live TypeSafe System One API; values are sanitized and no credentials are stored.",
   policy: {
     safeProbabilityThreshold: Number(process.env.JEV_AUTO_MODE_SAFE_PROBABILITY || 0.9),
+    readOnlySafeProbabilityThreshold: Number(process.env.JEV_AUTO_MODE_READ_ONLY_SAFE_PROBABILITY || 0.8),
     minimumConfidence: Number(process.env.JEV_AUTO_MODE_MIN_CONFIDENCE || 0.5),
   },
   traces,

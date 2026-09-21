@@ -160,6 +160,7 @@ export async function runBenchmark(cases, options) {
     model: process.env.TYPESAFE_DEFAULT_MODEL ?? "jev-latest",
     thresholds: {
       safeProbability: Number(process.env.JEV_AUTO_MODE_SAFE_PROBABILITY || 0.9),
+      readOnlySafeProbability: Number(process.env.JEV_AUTO_MODE_READ_ONLY_SAFE_PROBABILITY || 0.8),
       minimumConfidence: Number(process.env.JEV_AUTO_MODE_MIN_CONFIDENCE || 0.5),
       minimumAccuracy: options.minAccuracy,
       maximumFalseAllowRate: options.maxFalseAllowRate,

@@ -2,7 +2,7 @@
 import { pathToFileURL } from "node:url";
 import { classifierState, recentUserRequests } from "./context.mjs";
 import { classifyWithJev, decisionFromClassification } from "./jev.mjs";
-import { deterministicDecision } from "./policy.mjs";
+import { deterministicDecision, isReadOnlyToolCall } from "./policy.mjs";
 
 async function readStdin() {
   let input = "";
@@ -22,7 +22,10 @@ export async function evaluateHook(payload, options = {}) {
     const userRequests = await (options.recentUserRequestsImpl ?? recentUserRequests)(payload.transcriptPath);
     const state = classifierState(payload, userRequests);
     const classification = await classifyWithJev(state, options);
-    return decisionFromClassification(classification, options);
+    return decisionFromClassification(classification, {
+      ...options,
+      readOnly: isReadOnlyToolCall(payload.toolCall),
+    });
   } catch (error) {
     const detail = error instanceof Error ? error.message : "unknown classifier error";
     return {

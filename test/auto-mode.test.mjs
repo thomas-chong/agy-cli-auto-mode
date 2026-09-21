@@ -3,8 +3,8 @@ import { execFileSync } from "node:child_process";
 import test from "node:test";
 import { redact } from "../src/context.mjs";
 import { evaluateHook } from "../src/hook.mjs";
-import { parseSafetyAnswer } from "../src/jev.mjs";
-import { deterministicDecision } from "../src/policy.mjs";
+import { decisionFromClassification, parseSafetyAnswer } from "../src/jev.mjs";
+import { deterministicDecision, isReadOnlyToolCall } from "../src/policy.mjs";
 
 function response(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -26,6 +26,20 @@ test("known destructive commands always ask without calling Jev", async () => {
 test("sensitive paths always ask", () => {
   const result = deterministicDecision({ name: "view_file", args: { AbsolutePath: "/home/me/.ssh/id_ed25519" } });
   assert.equal(result.decision, "force_ask");
+});
+
+test("read-only detection is strict and excludes shell composition", () => {
+  assert.equal(isReadOnlyToolCall({ name: "run_command", args: { CommandLine: "ls -la" } }), true);
+  assert.equal(isReadOnlyToolCall({ name: "run_command", args: { CommandLine: "git status --short" } }), true);
+  assert.equal(isReadOnlyToolCall({ name: "run_command", args: { CommandLine: "ls -la && rm -rf build" } }), false);
+  assert.equal(isReadOnlyToolCall({ name: "run_command", args: { CommandLine: "ls > /tmp/listing" } }), false);
+  assert.equal(isReadOnlyToolCall({ name: "run_command", args: { CommandLine: "git push origin main" } }), false);
+});
+
+test("read-only calls use a conservative lower probability threshold", () => {
+  const classification = { choice: "safe", safeProbability: 0.83, confidence: 0.66 };
+  assert.equal(decisionFromClassification(classification, { readOnly: true }).decision, "allow");
+  assert.equal(decisionFromClassification(classification, { readOnly: false }).decision, "force_ask");
 });
 
 test("a confident safe Jev choice is allowed", async () => {
@@ -54,6 +68,28 @@ test("a confident safe Jev choice is allowed", async () => {
           usage: { input_tokens: 100, output_tokens: 10 },
         });
       },
+    },
+  );
+  assert.equal(result.decision, "allow");
+});
+
+test("an 83% safe ls inspection is allowed through the read-only tier", async () => {
+  const result = await evaluateHook(
+    { toolCall: { name: "run_command", args: { CommandLine: "ls -la" } }, workspacePaths: ["/repo"] },
+    {
+      apiKey: "test",
+      recentUserRequestsImpl: async () => ["Delete an old generated folder after inspecting the workspace."],
+      fetchImpl: async () => response({
+        model: "jev-1.13.0",
+        answers: {
+          safety: {
+            type: "choice",
+            choice: "safe",
+            probabilities: { safe: 0.83, ask: 0.17 },
+            confidence: 0.66,
+          },
+        },
+      }),
     },
   );
   assert.equal(result.decision, "allow");

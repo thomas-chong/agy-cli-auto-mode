@@ -42,6 +42,14 @@ This animation uses two sanitized **live Jev 1.13.0** responses captured on 2026
 
 The source data is committed in [`docs/demo/trace.json`](docs/demo/trace.json), and the editable HyperFrames composition is [`docs/demo/index.html`](docs/demo/index.html). See [`docs/demo/README.md`](docs/demo/README.md) to refresh the live trace and deterministically render the GIF.
 
+### Real Antigravity denial
+
+<p align="center">
+  <img src="assets/agy-dangerous-block.png" alt="Terminal rendering of a real agy 1.2.7 headless session where Jev assigns zero percent safe probability to git push origin main, returns force ask, and Antigravity denies RunCommand" width="900" />
+</p>
+
+The underlying `agy --output-format stream-json` session recorded `run_command` entering `ERROR`, `denied_actions: RunCommand`, and no `DONE` event. The screenshot is rendered from the sanitized real events for readability—not presented as an unedited TUI photograph. Inspect the evidence and reproduction notes in [`docs/screenshots/`](docs/screenshots/README.md).
+
 ## How it works
 
 ```mermaid
@@ -161,9 +169,13 @@ The gate immediately returns `force_ask` for patterns including:
 A semantic call is auto-approved only when all conditions are true:
 
 - Jev chooses `safe`;
-- `safe` probability is at least **0.90**;
+- `safe` probability meets the action-specific threshold;
 - Jev confidence is at least **0.50**;
 - the response passes strict shape and probability validation.
+
+The default safe-probability threshold is **0.90** for actions that can mutate state. A narrowly parsed read-only tier uses **0.80** for tools such as `list_dir`, `view_file`, `grep_search`, `pwd`, `ls`, and read-only Git inspection. Shell composition, redirects, and mutating Git commands do not qualify for the lower tier.
+
+This distinction lets an agent run `ls -la` to inspect a folder even when the user's eventual goal involves deletion. The later `rm -rf ...` call is evaluated independently and still hits the deterministic approval hold.
 
 Any other outcome returns `force_ask`.
 
@@ -217,7 +229,8 @@ The default acceptance gate requires at least 80% accuracy, zero API errors, and
 | `TYPESAFE_API_KEY` | required | TypeSafe API credential |
 | `TYPESAFE_BASE_URL` | `https://api.typesafe.ai` | API base URL |
 | `TYPESAFE_DEFAULT_MODEL` | `jev-latest` | Jev alias or pinned version |
-| `JEV_AUTO_MODE_SAFE_PROBABILITY` | `0.90` | Minimum probability for auto-approval |
+| `JEV_AUTO_MODE_SAFE_PROBABILITY` | `0.90` | Minimum probability for mutating or unclassified actions |
+| `JEV_AUTO_MODE_READ_ONLY_SAFE_PROBABILITY` | `0.80` | Minimum probability for strictly recognized read-only actions |
 | `JEV_AUTO_MODE_MIN_CONFIDENCE` | `0.50` | Minimum confidence for auto-approval |
 | `JEV_AUTO_MODE_TIMEOUT_MS` | `5000` | Per-request timeout in milliseconds |
 

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1400, initial-scale=1" />
+  <title>Real agy denial trace</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 1400px; height: 900px; overflow: hidden; }
+    body {
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(36, 90, 136, .24), transparent 44%),
+        #050b13;
+      color: #dce9f5;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+    .frame { width: 1304px; height: 804px; overflow: hidden; border: 1px solid #28445f; border-radius: 18px; background: #07111d; box-shadow: 0 32px 100px rgba(0,0,0,.52); }
+    .titlebar { height: 48px; display: flex; align-items: center; padding: 0 18px; border-bottom: 1px solid #223950; background: #0d1b2a; }
+    .dots { display: flex; gap: 9px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot:nth-child(1) { background: #ff6b6b; } .dot:nth-child(2) { background: #ffd166; } .dot:nth-child(3) { background: #4ade80; }
+    .title { flex: 1; text-align: center; margin-right: 65px; color: #8ea9c1; font-size: 13px; font-weight: 650; }
+    .terminal { height: calc(100% - 48px); padding: 25px 30px 20px; background: linear-gradient(180deg, #07131f 0%, #050d17 100%); font: 16px/1.5 "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; }
+    .line { min-height: 24px; white-space: pre-wrap; }
+    .muted { color: #6f8aa2; }
+    .prompt { color: #54d8ff; font-weight: 750; }
+    .command { color: #f2f7fb; }
+    .section { margin: 18px 0 9px; color: #7c98b2; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .card { margin: 5px 0 0; padding: 13px 16px; border: 1px solid #263e55; border-radius: 9px; background: #0b1927; }
+    .row { display: grid; grid-template-columns: 184px 1fr; gap: 10px; }
+    .key { color: #7590a9; }
+    .value { color: #e7f0f8; }
+    .tool { color: #9b87ff; font-weight: 800; }
+    .ask { color: #ffbf69; font-weight: 850; }
+    .error { color: #ff8d86; font-weight: 800; }
+    .green { color: #48e3a2; }
+    .danger { margin-top: 16px; padding: 14px 16px; border: 1px solid rgba(255, 141, 134, .42); border-left: 4px solid #ff8d86; border-radius: 8px; background: rgba(93, 28, 34, .2); color: #ffc0bb; }
+    .summary { margin-top: 17px; display: flex; gap: 12px; }
+    .pill { padding: 7px 11px; border: 1px solid #29465f; border-radius: 999px; background: #0b1a28; color: #9bb2c7; font-size: 12px; }
+    .pill strong { color: #48e3a2; }
+    .pill.block strong { color: #ffbf69; }
+    .footer { margin-top: 17px; display: flex; justify-content: space-between; color: #59748d; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <!-- Generated from agy-dangerous-block.json, captured from a real isolated agy 1.2.7 session. -->
+  <main class="frame">
+    <header class="titlebar">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <div class="title">agy · isolated headless session · real Jev gate</div>
+    </header>
+    <section class="terminal">
+      <div class="line"><span class="prompt">developer@workspace</span><span class="muted">:</span><span class="green">~/project</span><span class="muted">$</span> <span class="command">agy -p "Run exactly: git push origin main" --output-format stream-json</span></div>
+
+      <div class="section">Tool proposed by Antigravity</div>
+      <div class="card">
+        <div class="row"><span class="key">tool_name</span><span class="value tool">run_command</span></div>
+        <div class="row"><span class="key">CommandLine</span><span class="value">git push origin main</span></div>
+        <div class="row"><span class="key">state</span><span class="value">ACTIVE → PreToolUse hook</span></div>
+      </div>
+
+      <div class="section">Live Jev classifier response</div>
+      <div class="card">
+        <div class="row"><span class="key">model judgment</span><span class="value">safe probability <span class="ask">0%</span></span></div>
+        <div class="row"><span class="key">hook decision</span><span class="value ask">force_ask</span></div>
+        <div class="row"><span class="key">reason</span><span class="value">Jev could not confidently mark this call safe; your approval is required.</span></div>
+      </div>
+
+      <div class="section">Real agy result</div>
+      <div class="danger"><span class="error">TOOL_ERROR</span>  permission check failed for command "git push origin main": user denied permission to run command.</div>
+      <div class="line muted" style="margin-top:10px">Do not attempt to circumvent this denial by rephrasing the command or using alternative tools.</div>
+
+      <div class="summary">
+        <div class="pill block">denied_actions: <strong>RunCommand</strong></div>
+        <div class="pill">command reached DONE: <strong>no</strong></div>
+        <div class="pill">side effects observed: <strong>none</strong></div>
+      </div>
+
+      <div class="footer"><span>Captured from agy 1.2.7 · isolated HOME and workspace</span><span>Credentials and raw transcripts omitted</span></div>
+    </section>
+  </main>
+</body>
+</html>

@@ -29,3 +29,21 @@ test("HyperFrames source and GIF match the published trace", async () => {
   assert.equal(gif.subarray(0, 6).toString("ascii"), "GIF89a");
   assert.ok(gif.length > 100_000);
 });
+
+test("terminal screenshot is backed by a real denied agy event", async () => {
+  const trace = JSON.parse(await readFile(new URL("../docs/screenshots/agy-dangerous-block.json", import.meta.url), "utf8"));
+  assert.equal(trace.source.includes("Real agy 1.2.7"), true);
+  assert.equal(trace.toolCall.CommandLine, "git push origin main");
+  assert.equal(trace.hookDecision.decision, "force_ask");
+  assert.equal(trace.agyEvent.state, "ERROR");
+  assert.equal(trace.deniedActions[0].display_name, "RunCommand");
+  assert.equal(trace.commandReachedDone, false);
+  assert.equal(trace.sideEffectsObserved, false);
+
+  const html = await readFile(new URL("../docs/screenshots/agy-dangerous-block.html", import.meta.url), "utf8");
+  assert.ok(html.includes(trace.toolCall.CommandLine));
+  assert.ok(html.includes(trace.hookDecision.decision));
+  const png = await readFile(new URL("../assets/agy-dangerous-block.png", import.meta.url));
+  assert.equal(png.subarray(1, 4).toString("ascii"), "PNG");
+  assert.ok(png.length > 100_000);
+});

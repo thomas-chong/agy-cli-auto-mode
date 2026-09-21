@@ -4,6 +4,23 @@ const CONTROL_TOOLS = new Set([
   "ask_question",
 ]);
 
+const READ_ONLY_TOOLS = new Set([
+  "code_search",
+  "find_by_name",
+  "grep_search",
+  "list_dir",
+  "list_resources",
+  "read_resource",
+  "read_url_content",
+  "view_file",
+]);
+
+const READ_ONLY_COMMANDS = [
+  /^\s*pwd\s*$/i,
+  /^\s*ls(?:\s+(?:-[A-Za-z0-9]+|--[A-Za-z0-9-]+(?:=[A-Za-z0-9_.-]+)?|[A-Za-z0-9_./~+=-]+))*\s*$/i,
+  /^\s*git\s+(?:status|diff|log|show)(?:\s+(?:-[A-Za-z0-9]+|--[A-Za-z0-9-]+(?:=[A-Za-z0-9_./~+=:-]+)?|[A-Za-z0-9_./~+=:@-]+))*\s*$/i,
+];
+
 const HIGH_RISK_COMMANDS = [
   /(?:^|[;&|]\s*)rm\s+(?=[^\n;|&]*-[a-z]*r)(?=[^\n;|&]*-[a-z]*f)/i,
   /\b(?:sudo|su)\b/i,
@@ -23,6 +40,14 @@ function strings(value, result = []) {
     for (const item of Object.values(value)) strings(item, result);
   }
   return result;
+}
+
+export function isReadOnlyToolCall(toolCall) {
+  const name = toolCall?.name;
+  if (READ_ONLY_TOOLS.has(name)) return true;
+  if (name !== "run_command") return false;
+  const command = typeof toolCall.args?.CommandLine === "string" ? toolCall.args.CommandLine : "";
+  return READ_ONLY_COMMANDS.some((pattern) => pattern.test(command));
 }
 
 export function deterministicDecision(toolCall) {

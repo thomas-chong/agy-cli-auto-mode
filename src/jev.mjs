@@ -95,8 +95,11 @@ function boundedThreshold(value, fallback) {
 
 export function decisionFromClassification(result, options = {}) {
   const configuredSafe = options.safeThreshold ?? Number(process.env.JEV_AUTO_MODE_SAFE_PROBABILITY || 0.9);
+  const configuredReadOnly = options.readOnlySafeThreshold ?? Number(process.env.JEV_AUTO_MODE_READ_ONLY_SAFE_PROBABILITY || 0.8);
   const configuredConfidence = options.confidenceThreshold ?? Number(process.env.JEV_AUTO_MODE_MIN_CONFIDENCE || 0.5);
-  const safeThreshold = boundedThreshold(configuredSafe, 0.9);
+  const safeThreshold = options.readOnly
+    ? boundedThreshold(configuredReadOnly, 0.8)
+    : boundedThreshold(configuredSafe, 0.9);
   const confidenceThreshold = boundedThreshold(configuredConfidence, 0.5);
   if (
     result.choice === "safe" &&

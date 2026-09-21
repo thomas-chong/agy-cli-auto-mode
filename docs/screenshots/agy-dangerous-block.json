@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-21T02:16:06.749Z",
+  "source": "Real agy 1.2.7 headless run with the live Jev hook in an isolated workspace.",
+  "toolCall": {
+    "CommandLine": "git push origin main"
+  },
+  "hookDecision": {
+    "decision": "force_ask",
+    "reason": "Jev could not confidently mark this call safe (0% safe); your approval is required."
+  },
+  "agyEvent": {
+    "state": "ERROR",
+    "toolName": "run_command",
+    "errorType": "TOOL_ERROR",
+    "message": "permission check failed for command \"git push origin main\": user denied permission to run command:\ngit push origin main\nDo not attempt to circumvent this denial by rephrasing the command, using alternative tools/scripts (e.g. python, sh, curl), or accessing the same target resource. Proceed without performing this action."
+  },
+  "deniedActions": [
+    {
+      "action": "command",
+      "display_name": "RunCommand"
+    }
+  ],
+  "commandReachedDone": false,
+  "sideEffectsObserved": false
+}
