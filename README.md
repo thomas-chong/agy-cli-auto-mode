@@ -218,9 +218,10 @@ Write a machine-readable report or filter the dataset:
 node benchmark/run.mjs --live --json --output /tmp/jev-benchmark.json
 node benchmark/run.mjs --live --category remote-mutation
 node benchmark/run.mjs --live --limit 5
+node benchmark/run.mjs --live --with-user-policy
 ```
 
-The default acceptance gate requires at least 80% accuracy, zero API errors, and a **0% false-allow rate**. Live calls run serially and are never retried.
+Benchmarks ignore custom policy by default for baseline reproducibility. Pass `--with-user-policy` to evaluate your effective owner policy. The default acceptance gate requires at least 80% accuracy, zero API errors, and a **0% false-allow rate**. Live calls run serially and are never retried.
 
 ## Configuration
 
@@ -235,6 +236,82 @@ The default acceptance gate requires at least 80% accuracy, zero API errors, and
 | `JEV_AUTO_MODE_TIMEOUT_MS` | `5000` | Per-request timeout in milliseconds |
 
 Pin a versioned Jev model after calibrating thresholds. Moving aliases can change decisions.
+
+## Editable custom policy
+
+The policy workflow borrows the strongest ideas from Claude Code auto mode: owner-controlled classifier context, explicit allow/ask/deny rules, inspectable effective configuration, strict validation, and an untrusted-repository boundary.
+
+Create and edit your user policy:
+
+```sh
+npm run policy -- path
+npm run policy -- init
+npm run policy -- edit
+npm run policy -- validate
+npm run policy -- show
+```
+
+The default path is:
+
+```text
+~/.config/agy-jev-auto-mode/policy.json
+```
+
+Set `JEV_AUTO_MODE_POLICY_PATH` to use an administrator-deployed or alternate file. The hook deliberately does **not** load policy from the repository: cloned code and build steps must not be able to grant themselves broader permissions. For shared organization policy, deploy a non-group-writable file outside the workspace and set the path before launching `agy`.
+
+A policy can tune thresholds, give Jev trusted-environment context, and define exact tool rules:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/thomas-chong/agy-cli-auto-mode/main/policy.schema.json",
+  "version": 1,
+  "thresholds": {
+    "safeProbability": 0.9,
+    "readOnlySafeProbability": 0.8,
+    "minimumConfidence": 0.5
+  },
+  "context": {
+    "environment": [
+      "Source control under github.example.com/acme is internal and trusted."
+    ],
+    "instructions": [
+      "Database migrations always require human approval."
+    ]
+  },
+  "rules": [
+    {
+      "id": "allow-project-tests",
+      "decision": "allow",
+      "tool": "run_command",
+      "argument": "CommandLine",
+      "equals": "npm test"
+    },
+    {
+      "id": "ask-all-pushes",
+      "decision": "ask",
+      "tool": "run_command",
+      "argument": "CommandLine",
+      "startsWith": "git push ",
+      "reason": "Source-control pushes require a human checkpoint."
+    }
+  ]
+}
+```
+
+See [`examples/policy.json`](examples/policy.json) for a complete example and [`policy.schema.json`](policy.schema.json) for editor validation.
+
+Policy evaluation order is fixed:
+
+1. built-in destructive-command and sensitive-path holds;
+2. matching custom `deny` rules;
+3. matching custom `ask` rules;
+4. matching custom `allow` rules;
+5. Jev classification and configured thresholds;
+6. Antigravity's native permission engine.
+
+A built-in hold cannot be weakened by a custom `allow`. `startsWith` rules are powerful and should be narrow; prefer `equals` whenever practical. A malformed, oversized, or group/world-writable policy fails closed to `force_ask`. The editor command works on a temporary copy, validates it, and installs it atomically with mode `0600`, so malformed JSON never replaces the active file.
+
+Unlike Claude Code's replaceable `"$defaults"` lists, this plugin always retains its built-in holds. That smaller surface is intentional for an experimental security gate.
 
 ## Privacy and threat model
 
@@ -284,14 +361,17 @@ npm run benchmark
 
 | Path | Responsibility |
 | --- | --- |
-| `src/policy.mjs` | Deterministic destructive-command and sensitive-path checks |
+| `src/policy.mjs` | Built-in destructive-command, sensitive-path, and read-only checks |
+| `src/custom-policy.mjs` | Strict user policy loading, validation, and rule precedence |
 | `src/context.mjs` | Bounded context extraction and best-effort secret redaction |
 | `src/jev.mjs` | System One request, response validation, and thresholds |
 | `src/hook.mjs` | Antigravity hook orchestration and fail-closed behavior |
 | `benchmark/` | Labeled cases, runner, metrics, and acceptance gate |
 | `docs/demo/` | Sanitized live trace and editable HyperFrames HTML composition |
 | `scripts/capture-live-trace.mjs` | Bounded two-call live trace capture |
-| `test/` | Mocked unit, behavior, benchmark, and artifact tests |
+| `scripts/policy.mjs` | Secure policy path/init/show/validate/edit CLI |
+| `policy.schema.json` | JSON Schema for custom policy editor support |
+| `test/` | Mocked unit, policy, behavior, benchmark, and artifact tests |
 
 ## Development
 
@@ -325,6 +405,8 @@ Contributions are welcome—see [CONTRIBUTING.md](CONTRIBUTING.md). Security-sen
 - [Antigravity plugins](https://antigravity.google/docs/cli/plugins/)
 - [Antigravity sandbox](https://antigravity.google/docs/cli/sandbox/)
 - [LangChain's Jev auto-mode pattern](https://www.langchain.com/blog/building-a-harness-with-jev)
+- [Claude Code auto mode configuration](https://code.claude.com/docs/en/auto-mode-config)
+- [Claude Code permission precedence](https://code.claude.com/docs/en/permissions)
 
 ## License
 

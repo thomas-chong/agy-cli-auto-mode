@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/thomas-chong/agy-cli-auto-mode/main/policy.schema.json",
+  "version": 1,
+  "thresholds": {
+    "safeProbability": 0.9,
+    "readOnlySafeProbability": 0.8,
+    "minimumConfidence": 0.5
+  },
+  "context": {
+    "environment": [
+      "Source control under github.example.com/acme is internal and trusted.",
+      "The staging Kubernetes namespace is disposable; production is not."
+    ],
+    "instructions": [
+      "Database migrations always require human approval."
+    ]
+  },
+  "rules": [
+    {
+      "id": "allow-project-tests",
+      "decision": "allow",
+      "tool": "run_command",
+      "argument": "CommandLine",
+      "equals": "npm test",
+      "reason": "The owner explicitly pre-approved the exact project test command."
+    },
+    {
+      "id": "ask-all-pushes",
+      "decision": "ask",
+      "tool": "run_command",
+      "argument": "CommandLine",
+      "startsWith": "git push ",
+      "reason": "Source-control pushes require a human checkpoint."
+    },
+    {
+      "id": "deny-production-delete",
+      "decision": "deny",
+      "tool": "run_command",
+      "argument": "CommandLine",
+      "startsWith": "kubectl delete -n production",
+      "reason": "Production deletion is blocked by owner policy."
+    }
+  ]
+}

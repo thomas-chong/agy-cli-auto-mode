@@ -26,7 +26,9 @@ Include:
 - Keep deterministic deny rules and terminal sandboxing enabled.
 - Never use `always-proceed` or `--dangerously-skip-permissions` with this gate.
 - Pin and benchmark a Jev model before production use.
-- Treat classifier failures and uncertainty as requiring human approval.
+- Keep custom policy in the user-owned config path or an administrator-owned path outside the workspace; never let a repository select a weaker policy.
+- Prefer exact custom rules, keep policy non-group-writable, and review every `allow` or `startsWith` rule as a capability grant.
+- Treat classifier and policy-loading failures as requiring human approval.
 - Use scoped, low-privilege credentials in the agent environment.
 
 Security fixes may change classification behavior or thresholds and can be released without preserving unsafe compatibility.

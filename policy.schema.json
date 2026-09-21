@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/thomas-chong/agy-cli-auto-mode/main/policy.schema.json",
+  "title": "Antigravity Jev Auto Mode policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1 },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "safeProbability": { "type": "number", "minimum": 0, "maximum": 1 },
+        "readOnlySafeProbability": { "type": "number", "minimum": 0, "maximum": 1 },
+        "minimumConfidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "environment": { "type": "array", "items": { "type": "string", "minLength": 1 }, "maxItems": 128 },
+        "instructions": { "type": "array", "items": { "type": "string", "minLength": 1 }, "maxItems": 128 }
+      }
+    },
+    "rules": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "decision", "tool"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$" },
+          "decision": { "enum": ["allow", "ask", "deny"] },
+          "tool": { "type": "string", "minLength": 1 },
+          "argument": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+$" },
+          "equals": { "type": "string" },
+          "startsWith": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        },
+        "allOf": [
+          {
+            "if": { "required": ["argument"] },
+            "then": { "oneOf": [{ "required": ["equals"] }, { "required": ["startsWith"] }] },
+            "else": { "not": { "anyOf": [{ "required": ["equals"] }, { "required": ["startsWith"] }] } }
+          }
+        ]
+      }
+    }
+  }
+}

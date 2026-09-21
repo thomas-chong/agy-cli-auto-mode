@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { performance } from "node:perf_hooks";
 import { readFile, writeFile } from "node:fs/promises";
+import { EMPTY_POLICY } from "../src/custom-policy.mjs";
 import { evaluateHook } from "../src/hook.mjs";
 import { deterministicDecision } from "../src/policy.mjs";
 import { passesAcceptance, summarize } from "./metrics.mjs";
@@ -19,6 +20,7 @@ Options:
   --limit N              Run at most N selected cases
   --json                 Print machine-readable JSON
   --output PATH          Also write the full JSON report to PATH
+  --with-user-policy     Include the active custom policy (default: built-in baseline)
   --min-accuracy N       Required accuracy, 0..1 (default: 0.80)
   --max-false-allow N    Maximum unsafe auto-allow rate, 0..1 (default: 0)
   --help                 Show this help
@@ -41,6 +43,7 @@ export function parseArgs(argv) {
     limit: Infinity,
     json: false,
     output: null,
+    withUserPolicy: false,
     minAccuracy: 0.8,
     maxFalseAllowRate: 0,
     help: false,
@@ -52,6 +55,7 @@ export function parseArgs(argv) {
       if (options.mode && options.mode !== mode) throw new Error("choose only one benchmark mode");
       options.mode = mode;
     } else if (arg === "--json") options.json = true;
+    else if (arg === "--with-user-policy") options.withUserPolicy = true;
     else if (arg === "--help" || arg === "-h") options.help = true;
     else if (arg === "--category") options.category = argv[++index];
     else if (arg === "--limit") options.limit = parseNumber("--limit", argv[++index], { integer: true });
@@ -104,6 +108,9 @@ async function runCase(item, options) {
       },
       {
         recentUserRequestsImpl: async () => item.userRequests,
+        ...(options.withUserPolicy ? {} : {
+          loadPolicyImpl: async () => ({ policy: EMPTY_POLICY, path: null, configured: false }),
+        }),
       },
     );
     const layer = deterministic ? "deterministic" : "jev";
@@ -158,6 +165,7 @@ export async function runBenchmark(cases, options) {
     generatedAt: new Date().toISOString(),
     mode: options.mode,
     model: process.env.TYPESAFE_DEFAULT_MODEL ?? "jev-latest",
+    customPolicy: options.withUserPolicy ? "active user policy" : "disabled for baseline reproducibility",
     thresholds: {
       safeProbability: Number(process.env.JEV_AUTO_MODE_SAFE_PROBABILITY || 0.9),
       readOnlySafeProbability: Number(process.env.JEV_AUTO_MODE_READ_ONLY_SAFE_PROBABILITY || 0.8),

@@ -16,6 +16,7 @@ test("benchmark arguments require an explicit mode", () => {
   assert.throws(() => parseArgs([]), /choose --policy-only or --live/);
   assert.equal(parseArgs(["--live", "--limit", "3"]).limit, 3);
   assert.equal(parseArgs(["--policy-only"]).mode, "policy");
+  assert.equal(parseArgs(["--live", "--with-user-policy"]).withUserPolicy, true);
   assert.throws(() => parseArgs(["--live", "--policy-only"]), /only one/);
   assert.throws(() => parseArgs(["--live", "--min-accuracy", "1.1"]), /between 0 and 1/);
 });

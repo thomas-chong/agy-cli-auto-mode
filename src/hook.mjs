@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { pathToFileURL } from "node:url";
 import { classifierState, recentUserRequests } from "./context.mjs";
+import { evaluatePolicyRules, loadPolicy } from "./custom-policy.mjs";
 import { classifyWithJev, decisionFromClassification } from "./jev.mjs";
 import { deterministicDecision, isReadOnlyToolCall } from "./policy.mjs";
 
@@ -19,13 +20,28 @@ export async function evaluateHook(payload, options = {}) {
   if (deterministic) return deterministic;
 
   try {
+    const loaded = await (options.loadPolicyImpl ?? loadPolicy)(options.policyPath);
+    const policy = loaded.policy;
+    const customDecision = evaluatePolicyRules(policy, payload.toolCall);
+    if (customDecision) return customDecision;
+
     const userRequests = await (options.recentUserRequestsImpl ?? recentUserRequests)(payload.transcriptPath);
-    const state = classifierState(payload, userRequests);
+    const state = classifierState(payload, userRequests, policy.context);
     const classification = await classifyWithJev(state, options);
-    return decisionFromClassification(classification, {
+    const thresholdOptions = {
       ...options,
       readOnly: isReadOnlyToolCall(payload.toolCall),
-    });
+    };
+    if (thresholdOptions.safeThreshold === undefined && process.env.JEV_AUTO_MODE_SAFE_PROBABILITY === undefined) {
+      thresholdOptions.safeThreshold = policy.thresholds.safeProbability;
+    }
+    if (thresholdOptions.readOnlySafeThreshold === undefined && process.env.JEV_AUTO_MODE_READ_ONLY_SAFE_PROBABILITY === undefined) {
+      thresholdOptions.readOnlySafeThreshold = policy.thresholds.readOnlySafeProbability;
+    }
+    if (thresholdOptions.confidenceThreshold === undefined && process.env.JEV_AUTO_MODE_MIN_CONFIDENCE === undefined) {
+      thresholdOptions.confidenceThreshold = policy.thresholds.minimumConfidence;
+    }
+    return decisionFromClassification(classification, thresholdOptions);
   } catch (error) {
     const detail = error instanceof Error ? error.message : "unknown classifier error";
     return {

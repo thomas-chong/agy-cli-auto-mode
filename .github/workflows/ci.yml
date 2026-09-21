@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Validate JSON manifests
-        run: node -e "for (const file of ['package.json', 'plugin.json', 'hooks.json', 'benchmark/cases.json']) JSON.parse(require('node:fs').readFileSync(file, 'utf8'))"
+        run: node -e "for (const file of ['package.json', 'plugin.json', 'hooks.json', 'benchmark/cases.json', 'policy.schema.json', 'examples/policy.json']) JSON.parse(require('node:fs').readFileSync(file, 'utf8'))"
       - name: Run tests
         run: npm test
       - name: Run deterministic benchmark

@@ -25,6 +25,7 @@
     "test": "node --test",
     "benchmark": "node benchmark/run.mjs --policy-only",
     "benchmark:live": "node benchmark/run.mjs --live",
+    "policy": "node scripts/policy.mjs",
     "trace:live": "node scripts/capture-live-trace.mjs docs/demo/trace.json",
     "validate:plugin": "agy plugin validate ."
   },
